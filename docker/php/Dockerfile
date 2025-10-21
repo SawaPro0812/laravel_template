@@ -20,29 +20,25 @@ RUN apt-get update && apt-get install -y \
 # Apache の rewrite_module を有効化
 RUN a2enmod rewrite
 
-# PHP のエクステンションをインストール 〜コメントアウトしているライブラリはお好みで〜
+# PHP のエクステンションをインストール
 RUN docker-php-ext-install \
-    # ctype \
-    # curl \
-    # dom \
-    # fileinfo \
-    # filter \
-    # hash \
     intl \
-    # json \
-    # mbstring \
-    # openssl \
-    # pcre \
-    # PDO \
     pdo_mysql \
-    # pdo_sqlite \
-    # session \
-    # tokenizer \
-    # xml \
     zip
 
 RUN pecl install xdebug && \
     docker-php-ext-enable xdebug
+
+# ---- 追加設定（警告対応） ----
+# intl の二重読み込み防止（これで完全に警告消える）
+RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-intl.ini
+
+# タイムゾーン設定
+RUN echo "date.timezone = Asia/Tokyo" > /usr/local/etc/php/conf.d/timezone.ini
+
+# Xdebug 無効化（ログ関連警告回避）
+RUN echo "xdebug.mode=off" > /usr/local/etc/php/conf.d/disable-xdebug.ini
+# ---- ここまで ----
 
 # Composer インストール
 COPY --from=composer /usr/bin/composer /usr/bin/composer
